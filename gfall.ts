@@ -10,7 +10,7 @@ const execFileAsync = promisify(execFile);
 const root = path.resolve(process.argv[2] ?? '.');
 
 const entries = await readdir(root, { withFileTypes: true });
-const repositories = [];
+const repositories: Array<{ name: string; directory: string }> = [];
 let failed = false;
 
 for (const entry of entries) {
@@ -32,10 +32,11 @@ if (repositories.length === 0) {
   process.exit(0);
 }
 
-const tasks = new Listr(
+const nameWidth = Math.max(...repositories.map(({ name }) => name.length));
+const tasks = new Listr<Record<string, never>, 'default', 'simple'>(
   repositories.map(({ name, directory }) => ({
-    title: name,
-    task: async (_, task) => {
+    title: name.padEnd(nameWidth),
+    task: async (_context, task) => {
       const startedAt = performance.now();
 
       try {
@@ -44,18 +45,19 @@ const tasks = new Listr(
           ['-C', directory, 'fetch', '--all', '--prune'],
           { maxBuffer: 10 * 1024 * 1024 },
         );
-        task.title = `${name} · synced · ${elapsed(startedAt)}`;
+        const commitDate = await latestCommitDate(directory);
+        task.title = formatResult(name, nameWidth, commitDate, 'synced', startedAt);
       } catch (error) {
         failed = true;
-        task.title = `${name} · failed · ${elapsed(startedAt)}`;
-        const detail = error.stderr?.trim().split('\n').at(-1) || error.message;
-        throw new Error(detail);
+        task.title = formatResult(name, nameWidth, '----------', 'failed', startedAt);
+        throw new Error(errorDetail(error));
       }
     },
   })),
   {
     concurrent: 8,
     exitOnError: false,
+    renderer: 'default',
     rendererOptions: {
       collapseErrors: false,
       showErrorMessage: true,
@@ -67,6 +69,38 @@ console.log(`Fetching ${repositories.length} repositories from ${root}\n`);
 await tasks.run();
 if (failed) process.exitCode = 1;
 
-function elapsed(startedAt) {
+async function latestCommitDate(directory: string): Promise<string> {
+  try {
+    const { stdout } = await execFileAsync(
+      'git',
+      ['-C', directory, 'log', '-1', '--format=%cs'],
+    );
+    return stdout.trim() || '----------';
+  } catch {
+    return '----------';
+  }
+}
+
+function formatResult(
+  name: string,
+  width: number,
+  commitDate: string,
+  status: 'synced' | 'failed',
+  startedAt: number,
+): string {
+  return `${name.padEnd(width)} · ${commitDate} · ${status} · ${elapsed(startedAt)}`;
+}
+
+function errorDetail(error: unknown): string {
+  if (!(error instanceof Error)) return String(error);
+
+  const stderr = 'stderr' in error && typeof error.stderr === 'string'
+    ? error.stderr.trim().split('\n').at(-1)
+    : undefined;
+
+  return stderr || error.message;
+}
+
+function elapsed(startedAt: number): string {
   return `${((performance.now() - startedAt) / 1000).toFixed(1)}s`;
 }

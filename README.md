@@ -1,6 +1,7 @@
 # gfall
 
-Fetch every direct child Git repository with a live concurrent task list.
+Fetch every direct child Git repository with a live concurrent task list,
+aligned results, and each repository's latest commit date.
 
 ```bash
 pnpm install

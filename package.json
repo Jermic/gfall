@@ -1,6 +1,6 @@
 {
   "name": "gfall",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fetch multiple Git repositories concurrently",
   "type": "module",
   "repository": {
@@ -12,17 +12,23 @@
     "url": "https://github.com/Jermic/gfall/issues"
   },
   "files": [
-    "gfall.js"
+    "dist/gfall.js"
   ],
   "bin": {
-    "gfall": "./gfall.js"
+    "gfall": "dist/gfall.js"
   },
   "scripts": {
-    "start": "node gfall.js",
-    "test": "node --test"
+    "build": "tsc",
+    "start": "pnpm build && node dist/gfall.js",
+    "test": "pnpm build && node --test dist/gfall.test.js",
+    "prepack": "pnpm build"
   },
   "dependencies": {
     "listr2": "^10.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.0"
   },
   "engines": {
     "node": ">=22"
