@@ -1,0 +1,35 @@
+{
+  "name": "gfall",
+  "version": "0.1.0",
+  "description": "Fetch multiple Git repositories concurrently",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jermic/gfall.git"
+  },
+  "homepage": "https://github.com/Jermic/gfall#readme",
+  "bugs": {
+    "url": "https://github.com/Jermic/gfall/issues"
+  },
+  "files": [
+    "gfall.js"
+  ],
+  "bin": {
+    "gfall": "./gfall.js"
+  },
+  "scripts": {
+    "start": "node gfall.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "listr2": "^10.2.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.13.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}
